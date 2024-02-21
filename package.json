@@ -1,0 +1,34 @@
+{
+  "name": "shefa-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "seed": "node seed.js",
+    "test": "jest --watchAll --verbose"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "config": "^3.3.11",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-async-errors": "^3.1.1",
+    "fawn": "^2.1.5",
+    "joi": "^17.12.1",
+    "joi-objectid": "^4.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
+    "moment": "^2.30.1",
+    "mongoose": "^8.1.3",
+    "winston": "^3.11.0",
+    "winston-mongodb": "^5.1.1"
+  },
+  "devDependencies": {
+    "jest": "^22.2.2",
+    "supertest": "^3.0.0"
+  }
+}
