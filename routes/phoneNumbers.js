@@ -1,6 +1,6 @@
 const auth = require("../middleware/auth");
 const { PhoneNumber, validate } = require("../models/phoneNumbers");
-const createBaseResponse = require('../models/baseResponse')
+const createBaseResponse = require('../startup/baseResponse')
 const _ = require("lodash");
 const express = require("express");
 const router = express.Router();

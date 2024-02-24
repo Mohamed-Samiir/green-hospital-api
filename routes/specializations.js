@@ -1,6 +1,6 @@
 const auth = require("../middleware/auth");
 const { Specialization, validate } = require("../models/specialization");
-const createBaseResponse = require('../models/baseResponse')
+const createBaseResponse = require('../startup/baseResponse')
 const _ = require("lodash");
 const express = require("express");
 const router = express.Router();

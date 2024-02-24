@@ -7,6 +7,7 @@ const users = require('../routes/users');
 const auth = require('../routes/auth');
 const phoneNumbers = require('../routes/phoneNumbers')
 const specializations = require('../routes/specializations')
+const doctors = require('../routes/doctors')
 const returns = require('../routes/returns');
 const error = require('../middleware/error');
 
@@ -19,6 +20,7 @@ module.exports = function (app) {
   app.use('/api/users', users);
   app.use('/api/phoneNumbers', phoneNumbers);
   app.use('/api/specializations', specializations);
+  app.use('/api/doctors', doctors);
   app.use('/api/auth', auth);
   app.use('/api/returns', returns);
   app.use(error);
