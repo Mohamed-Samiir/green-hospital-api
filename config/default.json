@@ -1,6 +1,6 @@
 {
   "jwtPrivateKey": "unsecureKey",
-  "db": "mongodb://localhost/vidly",
+  "db": "mongodb://0.0.0.0/shefa",
   "port": "3900",
   "requiresAuth": false
 }

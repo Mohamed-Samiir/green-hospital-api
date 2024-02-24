@@ -7,7 +7,7 @@ const Fawn = require("fawn");
 const express = require("express");
 const router = express.Router();
 
-Fawn.init(mongoose);
+Fawn.init("mongodb://localhost/shefa");
 
 router.get("/", auth, async (req, res) => {
   const rentals = await Rental.find()
