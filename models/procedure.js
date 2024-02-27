@@ -2,11 +2,15 @@ const config = require("config");
 const Joi = require("joi");
 const mongoose = require("mongoose");
 
-const clinicDoctorSchema = new mongoose.Schema({
-    doctor: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Doctor",
+const procedureSchema = new mongoose.Schema({
+    name: {
+        type: String,
         required: true
+    },
+    doctor: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: "Doctor",
+        validate: v => Array.isArray(v) && v.length > 0
     },
     price: {
         type: Number,
@@ -44,11 +48,15 @@ const clinicDoctorSchema = new mongoose.Schema({
     }
 });
 
-const ClinicDoctor = mongoose.model("ClinicDoctor", clinicDoctorSchema);
+const Procedure = mongoose.model("Procedure", procedureSchema);
 
-function validateClinicDoctor(ClinicDoctor) {
+function validateProcedure(Procedure) {
     const schema = Joi.object({
-        doctor: Joi.string()
+        name: Joi.string()
+            .minLength(3)
+            .max(100)
+            .required(),
+        doctor: Joi.array()
             .required(),
         price: Joi.number()
             .required(),
@@ -66,8 +74,8 @@ function validateClinicDoctor(ClinicDoctor) {
         ageToUnit: Joi.string()
     });
 
-    return schema.validate(ClinicDoctor)
+    return schema.validate(Procedure)
 }
 
-exports.ClinicDoctor = ClinicDoctor;
-exports.validate = validateClinicDoctor;
+exports.Procedure = Procedure;
+exports.validate = validateProcedure;
