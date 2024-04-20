@@ -6,13 +6,9 @@ const express = require("express");
 const router = express.Router();
 
 //get sub specializations
-router.get("/", async (req, res) => {
-    const pageNumber = req.body.page ? req.body.page : 0
-    const pageCount = req.body.count ? req.body.count : 10
-    const totalCount = await specialization.countDocuments()
+router.get("/getSpecializations", async (req, res) => {
+    const totalCount = await Specialization.countDocuments()
     const specializations = await Specialization.find()
-        .skip(pageNumber * pageCount)
-        .limit(pageCount)
         .sort("name");
 
     res.send(createBaseResponse(specializations, true, 200, totalCount));
