@@ -41,6 +41,42 @@ router.post("/addDoctor", async (req, res) => {
     res.send(createBaseResponse(doctor, true, 200));
 });
 
+
+//edit Doctor
+router.post("/editDoctor/:id", async (req, res) => {
+    const { error } = validate(req.body);
+    if (error)
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, error.details[0].message));
+
+    let doctor = await Doctor.findOne({ _id: req.params.id });
+    if (!doctor)
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "Doctor donn't exist."));
+
+    let doctorObj = { ...req.body }
+    let selectedSpecialization = await Specialization.findById(req.body.specialization).select()
+    if (selectedSpecialization) {
+        let selectedSubSpecializations = selectedSpecialization.subSpecializations.filter(subspec => req.body.subSpecializations.includes(subspec._id.toString()))
+        if (selectedSubSpecializations) {
+            doctorObj.subSpecializations = selectedSubSpecializations
+        }
+    }
+
+    doctor = await Doctor.findByIdAndUpdate(req.params.id, { ...doctorObj });
+
+    res.send(createBaseResponse(doctor, true, 200));
+});
+
+//delete Doctor
+router.delete("/deleteDoctor/:id", async (req, res) => {
+    let doctor = await Doctor.findOne({ _id: req.params.id });
+    if (!doctor)
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "Doctor donn't exist."));
+
+    doctor = await Doctor.findByIdAndDelete(req.params.id,);
+
+    res.send(createBaseResponse(doctor, true, 200));
+});
+
 //get Doctor by Id
 router.get("/getDoctorById", async (req, res) => {
     const doctors = await Doctor.find()
