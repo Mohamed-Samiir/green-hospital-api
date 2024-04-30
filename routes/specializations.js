@@ -5,13 +5,12 @@ const _ = require("lodash");
 const express = require("express");
 const router = express.Router();
 
-//get sub specializations
+//get specializations
 router.get("/getSpecializations", async (req, res) => {
-    const totalCount = await Specialization.countDocuments()
     const specializations = await Specialization.find()
         .sort("name");
 
-    res.send(createBaseResponse(specializations, true, 200, totalCount));
+    res.send(createBaseResponse(specializations, true, 200, 1));
 })
 
 //add specialization number

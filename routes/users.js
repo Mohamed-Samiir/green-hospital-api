@@ -4,6 +4,7 @@ const _ = require("lodash");
 const { User, validate } = require("../models/user");
 const express = require("express");
 const router = express.Router();
+const createBaseResponse = require('../startup/baseResponse')
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password");
@@ -27,5 +28,12 @@ router.post("/", async (req, res) => {
     .header("x-auth-token", token)
     .send(_.pick(user, ["_id", "name", "email"]));
 });
+
+router.get("/getUsers", async (req, res) => {
+  const users = await User.find()
+    .sort("email")
+
+  res.send(createBaseResponse(users, true, 200, 1));
+})
 
 module.exports = router;
