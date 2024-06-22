@@ -63,4 +63,13 @@ router.get("/getUsers", async (req, res) => {
   res.send(createBaseResponse(users, true, 200, 1));
 })
 
+router.delete("/deleteUser/:id", async (req, res) => {
+  let user = await User.findOne({ _id: req.params.id });
+  if (!user) return res.status(400).send(createBaseResponse(null, false, 400, 0, "error", "User not registered."));
+
+  user = await User.findByIdAndDelete(req.params.id);
+
+  res.send(createBaseResponse(user, true, 200, 1, null, null));
+});
+
 module.exports = router;

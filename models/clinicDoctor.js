@@ -3,6 +3,11 @@ const Joi = require("joi");
 const mongoose = require("mongoose");
 
 const clinicDoctorSchema = new mongoose.Schema({
+    clinic: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Clinic",
+        required: true
+    },
     doctor: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Doctor",
@@ -18,6 +23,10 @@ const clinicDoctorSchema = new mongoose.Schema({
         type: Boolean,
         required: true,
     },
+    freeVisitFollowup: {
+        type: Boolean,
+        required: true,
+    },
     freeOperationFollowup: {
         type: Boolean,
         required: true,
@@ -28,7 +37,7 @@ const clinicDoctorSchema = new mongoose.Schema({
         min: 1
     },
     ageFromUnit: {
-        type: String,
+        type: Number,
         required: true,
     },
     ageTo: {
@@ -36,7 +45,8 @@ const clinicDoctorSchema = new mongoose.Schema({
         min: 1
     },
     ageToUnit: {
-        type: String,
+        type: Number,
+        required: true,
     },
     notes: {
         type: String,
@@ -48,22 +58,30 @@ const ClinicDoctor = mongoose.model("ClinicDoctor", clinicDoctorSchema);
 
 function validateClinicDoctor(ClinicDoctor) {
     const schema = Joi.object({
+        clinic: Joi.string()
+            .required(),
         doctor: Joi.string()
             .required(),
         price: Joi.number()
             .required(),
         acceptInsurance: Joi.boolean()
             .required(),
+        freeVisitFollowup: Joi.boolean()
+            .required(),
         freeOperationFollowup: Joi.boolean()
             .required(),
         ageFrom: Joi.number()
             .min(1)
             .required(),
-        ageFromUnit: Joi.string()
+        ageFromUnit: Joi.number()
             .required(),
         ageTo: Joi.number()
             .min(1),
-        ageToUnit: Joi.string()
+        ageToUnit: Joi.number(),
+        notes: Joi.string()
+            .optional()
+            .allow(null)
+            .allow("")
     });
 
     return schema.validate(ClinicDoctor)
@@ -71,3 +89,4 @@ function validateClinicDoctor(ClinicDoctor) {
 
 exports.ClinicDoctor = ClinicDoctor;
 exports.validate = validateClinicDoctor;
+exports.ClinicDoctorSchema = clinicDoctorSchema

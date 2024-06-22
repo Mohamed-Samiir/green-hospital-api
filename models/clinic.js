@@ -1,5 +1,6 @@
 const config = require("config");
 const Joi = require("joi");
+const { ClinicDoctorSchema } = require('./clinicDoctor');
 const mongoose = require("mongoose");
 
 const clinicSchema = new mongoose.Schema({
@@ -8,12 +9,6 @@ const clinicSchema = new mongoose.Schema({
         required: true,
         minlength: 3,
         maxlength: 100
-    },
-    doctors: {
-        type: [{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "ClinicDoctor"
-        }]
     }
 });
 
@@ -24,8 +19,7 @@ function validateClinic(Clinic) {
         name: Joi.string()
             .min(3)
             .max(100)
-            .required(),
-        doctors: Joi.array()
+            .required()
     });
 
     return schema.validate(Clinic)

@@ -21,7 +21,7 @@ router.post('/', async (req, res) => {
 
   const token = user.generateAuthToken();
   let response = createBaseResponse(
-    { ..._.pick(user, ["_id", "name", "email"]), token }, true, 200, 0)
+    { ..._.pick(user, ["_id", "name", "email", "isAdmin"]), token }, true, 200, 0)
 
   res.send(response);
 });
