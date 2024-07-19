@@ -4,9 +4,12 @@ const createBaseResponse = require('../startup/baseResponse')
 const _ = require("lodash");
 const express = require("express");
 const router = express.Router();
+const admin = require("../middleware/admin");
+const validateObjectId = require("../middleware/validateObjectId");
+
 
 //get specializations
-router.get("/getSpecializations", async (req, res) => {
+router.get("/getSpecializations", auth, async (req, res) => {
     const specializations = await Specialization.find()
         .sort("name");
 
@@ -14,7 +17,7 @@ router.get("/getSpecializations", async (req, res) => {
 })
 
 //get subSpecializations
-router.get("/getSubSpecializations", async (req, res) => {
+router.get("/getSubSpecializations", auth, async (req, res) => {
     const specializations = await Specialization.find()
         .sort("name");
     let subSpecializations = []
@@ -25,14 +28,14 @@ router.get("/getSubSpecializations", async (req, res) => {
 })
 
 //add specialization number
-router.post("/addSpecialization", async (req, res) => {
+router.post("/addSpecialization", [auth, admin], async (req, res) => {
     const { error } = validate(req.body);
     if (error)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, error.details[0].message));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "يوجد خطأ بالمدخلات"));
 
     let specialization = await Specialization.findOne({ name: req.body.name });
     if (specialization)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "Specialization aleary exists."));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "التخصص مضاف بالفعل"));
 
     specialization = new Specialization(_.pick(req.body, ["name", "subSpecializations"]));
     await specialization.save();
@@ -41,14 +44,14 @@ router.post("/addSpecialization", async (req, res) => {
 });
 
 //add specialization number
-router.post("/editSpecialization/:id", async (req, res) => {
+router.post("/editSpecialization/:id", [auth, admin, validateObjectId], async (req, res) => {
     const { error } = validate(req.body);
     if (error)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, error.details[0].message));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "يوجد خطأ بالمدخلات"));
 
     let specialization = await Specialization.findOne({ _id: req.params.id });
     if (!specialization)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "Specialization doesn't exists."));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "التخصص غير موجود"));
 
     specialization = await Specialization.findByIdAndUpdate(req.params.id,
         {
@@ -60,10 +63,10 @@ router.post("/editSpecialization/:id", async (req, res) => {
 });
 
 //delete Specialization
-router.delete("/deleteSpecialization/:id", async (req, res) => {
+router.delete("/deleteSpecialization/:id", [auth, admin, validateObjectId], async (req, res) => {
     let specialization = await Specialization.findOne({ _id: req.params.id });
     if (!specialization)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "Specialization donn't exist."));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "التخصص غير موجود"));
 
     specialization = await Specialization.findByIdAndDelete(req.params.id,);
 

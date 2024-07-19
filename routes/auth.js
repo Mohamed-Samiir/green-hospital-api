@@ -9,15 +9,15 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   const { error } = validate(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
+  if (error) return res.status(400).send("يوجد خطأ بالمدخلات");
 
   let user = await User.findOne({ email: req.body.email });
-  if (!user) return res.status(400).send('Invalid email or password.');
+  if (!user) return res.status(400).send('بريد إلكتروني أو كلمة سر غير صحيحة');
 
 
   const validPassword = await bcrypt.compare(req.body.password, user.password);
   // console.log(req.body.password, user.password);
-  if (!validPassword) return res.status(400).send('Invalid email or password.');
+  if (!validPassword) return res.status(400).send('بريد إلكتروني أو كلمة سر غير صحيحة');
 
   const token = user.generateAuthToken();
   let response = createBaseResponse(

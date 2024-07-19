@@ -4,10 +4,13 @@ const { ClinicDoctor } = require("../models/clinicDoctor");
 const createBaseResponse = require('../startup/baseResponse')
 const _ = require("lodash");
 const express = require("express");
+const admin = require("../middleware/admin");
 const router = express.Router();
+const validateObjectId = require("../middleware/validateObjectId");
+
 
 //get Clinics
-router.get("/getClinics", async (req, res) => {
+router.get("/getClinics", auth, async (req, res) => {
     const totalCount = await Clinic.countDocuments()
     const clinics = await Clinic.find()
         .sort("name")
@@ -28,14 +31,14 @@ router.get("/getClinics", async (req, res) => {
 })
 
 //add Clinic
-router.post("/addClinic", async (req, res) => {
+router.post("/addClinic", [auth, admin], async (req, res) => {
     const { error } = validate(req.body);
     if (error)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, error.details[0].message));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "يوجد خطأ بالمدخلات"));
 
     let clinic = await Clinic.findOne({ name: req.body.name });
     if (clinic)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "Clinic already exists."));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "العيادة مضافة بالفعل"));
 
     clinic = new Clinic(req.body);
     await clinic.save();
@@ -45,14 +48,14 @@ router.post("/addClinic", async (req, res) => {
 
 
 // edit Clinic
-router.post("/editClinic/:id", async (req, res) => {
+router.post("/editClinic/:id", [auth, admin], async (req, res) => {
     const { error } = validate(req.body);
     if (error)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, error.details[0].message));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "يوجد خطأ بالمدخلات"));
 
     let clinic = await Clinic.findOne({ _id: req.params.id });
     if (!clinic)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "Clinic donn't exist."));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "العيادة غير موجودة"));
 
     clinic = await Clinic.findByIdAndUpdate(req.params.id, { name: req.body.name });
 
@@ -60,15 +63,13 @@ router.post("/editClinic/:id", async (req, res) => {
 });
 
 //delete Clinic
-router.delete("/deleteClinic/:id", async (req, res) => {
+router.delete("/deleteClinic/:id", [auth, admin, validateObjectId], async (req, res) => {
     let clinic = await Clinic.findOne({ _id: req.params.id });
     if (!clinic)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "clinic doesn't exist."));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "العيادة غير موجودة"));
 
     let clinicDoctors = await ClinicDoctor.deleteMany({ clinic: clinic._id })
-    // clinicDoctors
     clinic = await Clinic.findByIdAndDelete(req.params.id);
-    // console.log(clinicDoctors);
     res.send(createBaseResponse(clinic, true, 200));
 });
 

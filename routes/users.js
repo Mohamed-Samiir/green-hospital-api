@@ -13,10 +13,10 @@ router.get("/me", auth, async (req, res) => {
 
 router.post("/addUser", async (req, res) => {
   const { error } = validate(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
+  if (error) return res.status(400).send("يوجد خطأ بالمدخلات");
 
   let user = await User.findOne({ email: req.body.email });
-  if (user) return res.status(400).send(createBaseResponse(null, false, 400, 0, "error", "User already registered."));
+  if (user) return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "المستخدم مضاف بالفعل"));
 
   user = new User(_.pick(req.body, ["name", "email", "password", "isAdmin", "isActive"]));
   const salt = await bcrypt.genSalt(10);
@@ -31,10 +31,10 @@ router.post("/addUser", async (req, res) => {
 
 router.post("/editUser", async (req, res) => {
   const { error } = validate(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
+  if (error) return res.status(400).send("يوجد خطأ بالمدخلات");
 
   let user = await User.findOne({ email: req.body.email });
-  if (!user) return res.status(400).send(createBaseResponse(null, false, 400, 0, "error", "User not registered."));
+  if (!user) return res.status(400).send(createBaseResponse(null, false, 400, 0, "error", "المستخدم غير موجود"));
 
   const salt = await bcrypt.genSalt(10);
   let newPassword = req.body.password ? await bcrypt.hash(req.body.password, salt) : user.password;
@@ -65,7 +65,7 @@ router.get("/getUsers", async (req, res) => {
 
 router.delete("/deleteUser/:id", async (req, res) => {
   let user = await User.findOne({ _id: req.params.id });
-  if (!user) return res.status(400).send(createBaseResponse(null, false, 400, 0, "error", "User not registered."));
+  if (!user) return res.status(400).send(createBaseResponse(null, false, 400, 0, "error", "المستخدم غير موجود"));
 
   user = await User.findByIdAndDelete(req.params.id);
 

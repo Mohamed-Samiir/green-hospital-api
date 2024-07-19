@@ -7,7 +7,7 @@ const procedureSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    doctor: {
+    doctors: {
         type: [mongoose.Schema.Types.ObjectId],
         ref: "Doctor",
         validate: v => Array.isArray(v) && v.length > 0
@@ -22,17 +22,13 @@ const procedureSchema = new mongoose.Schema({
         type: Boolean,
         required: true,
     },
-    freeOperationFollowup: {
-        type: Boolean,
-        required: true,
-    },
     ageFrom: {
         type: Number,
         required: true,
         min: 1
     },
     ageFromUnit: {
-        type: String,
+        type: Number,
         required: true,
     },
     ageTo: {
@@ -40,7 +36,7 @@ const procedureSchema = new mongoose.Schema({
         min: 1
     },
     ageToUnit: {
-        type: String,
+        type: Number,
     },
     notes: {
         type: String,
@@ -53,25 +49,23 @@ const Procedure = mongoose.model("Procedure", procedureSchema);
 function validateProcedure(Procedure) {
     const schema = Joi.object({
         name: Joi.string()
-            .minLength(3)
+            .min(3)
             .max(100)
             .required(),
-        doctor: Joi.array()
+        doctors: Joi.array()
             .required(),
         price: Joi.number()
             .required(),
         acceptInsurance: Joi.boolean()
             .required(),
-        freeOperationFollowup: Joi.boolean()
-            .required(),
         ageFrom: Joi.number()
             .min(1)
             .required(),
-        ageFromUnit: Joi.string()
+        ageFromUnit: Joi.number()
             .required(),
         ageTo: Joi.number()
             .min(1),
-        ageToUnit: Joi.string()
+        ageToUnit: Joi.number()
     });
 
     return schema.validate(Procedure)

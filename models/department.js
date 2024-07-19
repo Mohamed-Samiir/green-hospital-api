@@ -10,10 +10,8 @@ const departmentSchema = new mongoose.Schema({
         minlength: 3,
         maxlength: 100
     },
-    phoneNumber: {
-        type: Number,
-        required: true,
-        unique: true
+    phoneNumbers: {
+        type: [String],
     },
     allowContact: {
         type: Boolean,
@@ -35,13 +33,12 @@ function validateDepartment(Department) {
             .min(3)
             .max(100)
             .required(),
-        phoneNumber: Joi.string()
-            .required(),
+        phoneNumbers: Joi.array(),
         allowContact: Joi.boolean(),
         contactPeriods: Joi.string()
-            .require()
-            .maxlength(255)
-            .minlength(3)
+            .required()
+            .max(255)
+            .min(3)
     });
 
     return schema.validate(Department)

@@ -27,10 +27,6 @@ const clinicDoctorSchema = new mongoose.Schema({
         type: Boolean,
         required: true,
     },
-    freeOperationFollowup: {
-        type: Boolean,
-        required: true,
-    },
     ageFrom: {
         type: Number,
         required: true,
@@ -67,8 +63,6 @@ function validateClinicDoctor(ClinicDoctor) {
         acceptInsurance: Joi.boolean()
             .required(),
         freeVisitFollowup: Joi.boolean()
-            .required(),
-        freeOperationFollowup: Joi.boolean()
             .required(),
         ageFrom: Joi.number()
             .min(1)

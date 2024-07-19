@@ -5,26 +5,33 @@ const createBaseResponse = require('../startup/baseResponse')
 const _ = require("lodash");
 const express = require("express");
 const router = express.Router();
+const validateObjectId = require("../middleware/validateObjectId");
+const admin = require("../middleware/admin");
+
 
 //get Doctors
-router.get("/getDoctors", async (req, res) => {
+router.get("/getDoctors", auth, async (req, res) => {
     const totalCount = await Doctor.countDocuments()
-    const doctors = await Doctor.find()
+    let doctors = await Doctor.find()
         .populate('specialization')
         .sort("name")
+
+    if (!req.user.isAdmin) {
+        doctors = doctors.filter(doc => doc.isActive)
+    }
 
     res.send(createBaseResponse(doctors, true, 200, totalCount));
 })
 
 //add Doctor
-router.post("/addDoctor", async (req, res) => {
+router.post("/addDoctor", [auth, admin], async (req, res) => {
     const { error } = validate(req.body);
     if (error)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, error.details[0].message));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "يوجد خطأ بالمدخلات"));
 
     let doctor = await Doctor.findOne({ name: req.body.name });
     if (doctor)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "Doctor already exists."));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "الطبيب موجود بالفعل"));
 
     let doctorObj = { ...req.body }
     let selectedSpecialization = await Specialization.findById(req.body.specialization).select()
@@ -43,14 +50,14 @@ router.post("/addDoctor", async (req, res) => {
 
 
 //edit Doctor
-router.post("/editDoctor/:id", async (req, res) => {
+router.post("/editDoctor/:id", [auth, admin, validateObjectId], async (req, res) => {
     const { error } = validate(req.body);
     if (error)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, error.details[0].message));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "يوجد خطأ بالمدخلات"));
 
     let doctor = await Doctor.findOne({ _id: req.params.id });
     if (!doctor)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "Doctor donn't exist."));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "الطبيب غير موجود"));
 
     let doctorObj = { ...req.body }
     let selectedSpecialization = await Specialization.findById(req.body.specialization).select()
@@ -67,10 +74,10 @@ router.post("/editDoctor/:id", async (req, res) => {
 });
 
 //delete Doctor
-router.delete("/deleteDoctor/:id", async (req, res) => {
+router.delete("/deleteDoctor/:id", [auth, admin, validateObjectId], async (req, res) => {
     let doctor = await Doctor.findOne({ _id: req.params.id });
     if (!doctor)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "Doctor donn't exist."));
+        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "الطبيب غير موجود"));
 
     doctor = await Doctor.findByIdAndDelete(req.params.id,);
 
