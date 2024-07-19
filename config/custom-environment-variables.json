@@ -1,3 +1,4 @@
 {
-  "jwtPrivateKey": "shifa_jwtPrivateKey"
+  "jwtPrivateKey": "shifa_jwtPrivateKey",
+  "db": "shifa_db"
 }
