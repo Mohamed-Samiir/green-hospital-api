@@ -1,5 +1,5 @@
 {
-  "jwtPrivateKey": "unsecureKey",
+  "jwtPrivateKey": "shifa_jwtPrivateKey",
   "db": "mongodb://0.0.0.0/shefa",
   "port": "3900",
   "requiresAuth": false
