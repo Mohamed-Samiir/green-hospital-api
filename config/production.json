@@ -1,4 +1,4 @@
 {
   "jwtPrivateKey": "shifa_jwtPrivateKey",
-  "db": "shifa_db"
+  "db": "mongodb+srv://msamir:M.samiir123@green-hospital.rpwvmgb.mongodb.net/"
 }
