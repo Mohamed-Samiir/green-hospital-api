@@ -65,7 +65,8 @@ function validateProcedure(Procedure) {
             .required(),
         ageTo: Joi.number()
             .min(1),
-        ageToUnit: Joi.number()
+        ageToUnit: Joi.number(),
+        notes: Joi.string()
     });
 
     return schema.validate(Procedure)
