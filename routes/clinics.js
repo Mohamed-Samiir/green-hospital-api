@@ -9,26 +9,132 @@ const router = express.Router();
 const validateObjectId = require("../middleware/validateObjectId");
 
 
-//get Clinics
+// get Clinics
 router.get("/getClinics", auth, async (req, res) => {
     const totalCount = await Clinic.countDocuments()
-    const clinics = await Clinic.find()
-        .sort("name")
+    // const clinics = await Clinic.find()
+    //     .sort("name")
 
-    let clinicsResponse = []
-    if (clinics.length) {
-        for (let i = 0; i < clinics.length; i++) {
-            let clinicDoctors = await ClinicDoctor.find({ clinic: clinics[i]._id }).populate('doctor')
-            clinicsResponse.push({
-                name: clinics[i].name,
-                _id: clinics[i]._id,
-                doctors: clinicDoctors
-            })
+    // let clinicsResponse = []
+    // if (clinics.length) {
+    //     for (let i = 0; i < clinics.length; i++) {
+    //         let clinicDoctors = await ClinicDoctor.find({ clinic: clinics[i]._id }).populate('doctor')
+    //         clinicsResponse.push({
+    //             name: clinics[i].name,
+    //             _id: clinics[i]._id,
+    //             doctors: clinicDoctors
+    //         })
+    //     }
+    // }
+
+    const clinicsResponse = await Clinic.aggregate([
+        {
+            $lookup: {
+                from: "clinicdoctors", // The name of the clinicDoctors collection
+                localField: "_id",     // The field from the clinics collection
+                foreignField: "clinic", // The field from the clinicDoctors collection
+                as: "clinicDoctors"     // The output array field
+            }
+        },
+        {
+            $lookup: {
+                from: "doctors",            // The name of the doctors collection
+                localField: "clinicDoctors.doctor", // The field from clinicDoctors
+                foreignField: "_id",        // The field from the doctors collection
+                as: "doctorDetails"         // The output array field
+            }
+        },
+        {
+            $unwind: {                       // Unwind the clinicDoctors array
+                path: "$clinicDoctors",
+                preserveNullAndEmptyArrays: true // Include clinics without doctors
+            }
+        },
+        {
+            $addFields: {                   // Add the doctor name to each clinicDoctor record
+                "clinicDoctors.doctorName": {
+                    $arrayElemAt: [
+                        "$doctorDetails.name",  // Take the name of the first matched doctor
+                        0
+                    ]
+                }
+            }
+        },
+        {
+            $group: {                       // Group by clinic ID to consolidate records
+                _id: {
+                    _id: "$_id",
+                    name: "$name"
+                },
+                clinicDoctors: {
+                    $push: "$clinicDoctors"  // Push all clinicDoctor records into an array
+                }
+            }
+        },
+        {
+            $project: {                     // Project the final output
+                _id: "$_id._id",
+                name: "$_id.name",
+                clinicDoctors: 1 // Include the clinicDoctors array
+            }
         }
-    }
+    ]);
+
 
     res.send(createBaseResponse(clinicsResponse, true, 200, totalCount));
 })
+
+// router.get("/getClinics", auth, async (req, res) => {
+//     try {
+//         const totalCount = await Clinic.countDocuments();
+
+//         const clinicsResponse = await Clinic.aggregate([
+//             {
+//                 $lookup: {
+//                     from: 'clinicDoctors',               // Lookup into clinicDoctors collection
+//                     localField: '_id',                   // Match clinic _id
+//                     foreignField: 'clinic',              // with clinic field in clinicDoctors
+//                     as: 'clinicDoctors'
+//                 }
+//             },
+//             {
+//                 $unwind: {                              // Unwind clinicDoctors to process each clinic-doctor relation
+//                     path: "$clinicDoctors",
+//                     preserveNullAndEmptyArrays: true    // Preserve clinics even if no doctors are linked
+//                 }
+//             },
+//             {
+//                 $lookup: {
+//                     from: 'doctors',                    // Lookup into doctors collection
+//                     localField: 'clinicDoctors.doctor',  // Match doctor id from clinicDoctors
+//                     foreignField: '_id',                // with _id in doctors collection
+//                     as: 'doctorDetails'                 // Output array with matching doctor documents
+//                 }
+//             },
+//             {
+//                 $unwind: {                              // Unwind doctorDetails array to get individual doctor data
+//                     path: "$doctorDetails",
+//                     preserveNullAndEmptyArrays: true
+//                 }
+//             },
+//             {
+//                 $group: {                               // Group by clinic
+//                     _id: "$_id",
+//                     name: { $first: "$name" },          // Keep clinic name
+//                     doctors: { $push: "$doctorDetails" } // Collect doctor details into an array
+//                 }
+//             },
+//             {
+//                 $sort: { name: 1 }                      // Sort clinics by name
+//             }
+//         ]);
+
+//         res.send(createBaseResponse(clinicsResponse, true, 200, totalCount));
+//     } catch (error) {
+//         res.status(500).send({ error: "Something went wrong." });
+//     }
+// });
+
 
 //add Clinic
 router.post("/addClinic", [auth, admin], async (req, res) => {
