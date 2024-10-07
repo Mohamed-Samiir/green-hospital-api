@@ -45,37 +45,45 @@ router.get("/getClinics", auth, async (req, res) => {
             }
         },
         {
-            $unwind: {                       // Unwind the clinicDoctors array
-                path: "$clinicDoctors",
-                preserveNullAndEmptyArrays: true // Include clinics without doctors
-            }
-        },
-        {
-            $addFields: {                   // Add the doctor name to each clinicDoctor record
-                "clinicDoctors.doctorName": {
-                    $arrayElemAt: [
-                        "$doctorDetails.name",  // Take the name of the first matched doctor
-                        0
-                    ]
-                }
-            }
-        },
-        {
-            $group: {                       // Group by clinic ID to consolidate records
-                _id: {
-                    _id: "$_id",
-                    name: "$name"
-                },
-                clinicDoctors: {
-                    $push: "$clinicDoctors"  // Push all clinicDoctor records into an array
+            $addFields: { // Add doctor names to each clinicDoctor
+                "clinicDoctors": {
+                    $map: {
+                        input: "$clinicDoctors",
+                        as: "clinicDoctor",
+                        in: {
+                            $mergeObjects: [
+                                "$$clinicDoctor", // Keep all properties of clinicDoctor
+                                {
+                                    doctorName: {
+                                        $arrayElemAt: [
+                                            {
+                                                $filter: {
+                                                    input: "$doctorDetails",
+                                                    as: "doctor",
+                                                    cond: { $eq: ["$$doctor._id", "$$clinicDoctor.doctor"] } // Match doctor ID
+                                                }
+                                            },
+                                            0 // Get the first matching doctor
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
                 }
             }
         },
         {
             $project: {                     // Project the final output
-                _id: "$_id._id",
-                name: "$_id.name",
-                clinicDoctors: 1 // Include the clinicDoctors array
+                _id: 1,
+                name: 1,
+                clinicDoctors: {
+                    $filter: {
+                        input: "$clinicDoctors",
+                        as: "clinicDoctor",
+                        cond: { $ne: ["$$clinicDoctor.doctorName", null] } // Filter out clinicDoctors without doctor names
+                    }
+                }
             }
         }
     ]);
