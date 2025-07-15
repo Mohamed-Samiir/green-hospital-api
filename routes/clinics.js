@@ -47,7 +47,7 @@ router.get("/getClinics", auth, async (req, res) => {
         {
             $lookup: {
                 from: "branches",           // The name of the branches collection
-                localField: "clinicDoctors.branch", // The field from clinicDoctors
+                localField: "clinicDoctors.branches", // The field from clinicDoctors (now array)
                 foreignField: "_id",        // The field from the branches collection
                 as: "branchDetails"         // The output array field
             }
@@ -74,17 +74,23 @@ router.get("/getClinics", auth, async (req, res) => {
                                             0 // Get the first matching doctor
                                         ]
                                     },
-                                    branchName: {
-                                        $arrayElemAt: [
-                                            {
-                                                $filter: {
-                                                    input: "$branchDetails",
-                                                    as: "branch",
-                                                    cond: { $eq: ["$$branch._id", "$$clinicDoctor.branch"] } // Match branch ID
-                                                }
-                                            },
-                                            0 // Get the first matching branch
-                                        ]
+                                    branchNames: {
+                                        $map: {
+                                            input: "$$clinicDoctor.branches",
+                                            as: "branchId",
+                                            in: {
+                                                $arrayElemAt: [
+                                                    {
+                                                        $filter: {
+                                                            input: "$branchDetails",
+                                                            as: "branch",
+                                                            cond: { $eq: ["$$branch._id", "$$branchId"] } // Match branch ID
+                                                        }
+                                                    },
+                                                    0 // Get the first matching branch
+                                                ]
+                                            }
+                                        }
                                     }
                                 }
                             ]
