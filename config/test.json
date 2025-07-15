@@ -1,4 +1,5 @@
 {
   "jwtPrivateKey": "shifa_jwtPrivateKey",
-  "db": "mongodb+srv://msamir:M.samiir123@green-hospital.rpwvmgb.mongodb.net/"
+  "db": "mongodb://localhost:27017/shifa-test-db",
+  "dbAtlas": "mongodb+srv://msamir:M.samiir123@green-hospital.rpwvmgb.mongodb.net/"
 }
