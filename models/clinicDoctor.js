@@ -13,6 +13,11 @@ const clinicDoctorSchema = new mongoose.Schema({
         ref: "Doctor",
         required: true
     },
+    branch: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Branch",
+        required: false
+    },
     price: {
         type: Number,
         required: true,
@@ -58,6 +63,10 @@ function validateClinicDoctor(ClinicDoctor) {
             .required(),
         doctor: Joi.string()
             .required(),
+        branch: Joi.string()
+            .optional()
+            .allow(null)
+            .allow(""),
         price: Joi.number()
             .required(),
         acceptInsurance: Joi.boolean()

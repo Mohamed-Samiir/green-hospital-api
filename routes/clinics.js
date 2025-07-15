@@ -45,7 +45,15 @@ router.get("/getClinics", auth, async (req, res) => {
             }
         },
         {
-            $addFields: { // Add doctor names to each clinicDoctor
+            $lookup: {
+                from: "branches",           // The name of the branches collection
+                localField: "clinicDoctors.branch", // The field from clinicDoctors
+                foreignField: "_id",        // The field from the branches collection
+                as: "branchDetails"         // The output array field
+            }
+        },
+        {
+            $addFields: { // Add doctor names and branch names to each clinicDoctor
                 "clinicDoctors": {
                     $map: {
                         input: "$clinicDoctors",
@@ -64,6 +72,18 @@ router.get("/getClinics", auth, async (req, res) => {
                                                 }
                                             },
                                             0 // Get the first matching doctor
+                                        ]
+                                    },
+                                    branchName: {
+                                        $arrayElemAt: [
+                                            {
+                                                $filter: {
+                                                    input: "$branchDetails",
+                                                    as: "branch",
+                                                    cond: { $eq: ["$$branch._id", "$$clinicDoctor.branch"] } // Match branch ID
+                                                }
+                                            },
+                                            0 // Get the first matching branch
                                         ]
                                     }
                                 }
