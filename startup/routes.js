@@ -10,6 +10,7 @@ const questions = require('../routes/questions')
 const procedures = require('../routes/procedures')
 const departments = require('../routes/departments')
 const branches = require('../routes/branches')
+const broadcasts = require('../routes/broadcasts')
 const error = require('../middleware/error');
 
 module.exports = function (app) {
@@ -24,6 +25,7 @@ module.exports = function (app) {
   app.use('/api/procedures', procedures);
   app.use('/api/departments', departments);
   app.use('/api/branches', branches);
+  app.use('/api/broadcasts', broadcasts);
   app.use('/api/auth', auth);
   app.use(error);
 }
