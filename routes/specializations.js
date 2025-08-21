@@ -44,7 +44,7 @@ router.post("/addSpecialization", [auth, admin], async (req, res) => {
 });
 
 //add specialization number
-router.post("/editSpecialization/:id", [auth, admin, validateObjectId], async (req, res) => {
+router.post("/editSpecialization/:id", [auth, admin, validateObjectId()], async (req, res) => {
     const { error } = validate(req.body);
     if (error)
         return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "يوجد خطأ بالمدخلات"));

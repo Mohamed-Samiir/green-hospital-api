@@ -69,7 +69,7 @@ router.get("/getMessages", auth, async (req, res) => {
 });
 
 // Mark message as read by current user
-router.post("/markAsRead/:messageId", [auth, validateObjectId], async (req, res) => {
+router.post("/markAsRead/:messageId", [auth, validateObjectId('messageId')], async (req, res) => {
     try {
         const message = await BroadcastMessage.findById(req.params.messageId);
         if (!message)
@@ -112,7 +112,7 @@ router.post("/markAsRead/:messageId", [auth, validateObjectId], async (req, res)
 });
 
 // Get readers of a specific message (admin only)
-router.get("/getReaders/:messageId", [auth, admin, validateObjectId], async (req, res) => {
+router.get("/getReaders/:messageId", [auth, admin, validateObjectId('messageId')], async (req, res) => {
     try {
         const message = await BroadcastMessage.findById(req.params.messageId)
             .select('readers message senderName createdAt')
@@ -146,7 +146,7 @@ router.get("/getReaders/:messageId", [auth, admin, validateObjectId], async (req
 router.delete("/clearHistory", [auth, admin], async (req, res) => {
     try {
         const result = await BroadcastMessage.deleteMany({});
-        
+
         // Emit to all users that history was cleared
         const io = req.app.get('io');
         if (io) {

@@ -36,7 +36,7 @@ router.post("/addBranch", [auth, admin], async (req, res) => {
             address: req.body.address,
             isActive: true
         });
-        
+
         await branch.save();
 
         res.send(createBaseResponse(branch, true, 200, 0, null, "تم إضافة الفرع بنجاح"));
@@ -46,7 +46,7 @@ router.post("/addBranch", [auth, admin], async (req, res) => {
 });
 
 // Edit Branch
-router.post("/editBranch/:id", [auth, admin, validateObjectId], async (req, res) => {
+router.post("/editBranch/:id", [auth, admin, validateObjectId()], async (req, res) => {
     try {
         const { error } = validate(req.body);
         if (error)
@@ -57,16 +57,16 @@ router.post("/editBranch/:id", [auth, admin, validateObjectId], async (req, res)
             return res.status(404).send(createBaseResponse(null, false, 404, 0, null, "الفرع غير موجود"));
 
         // Check if another branch with the same name exists (excluding current branch)
-        let existingBranch = await Branch.findOne({ 
-            name: req.body.name, 
-            _id: { $ne: req.params.id } 
+        let existingBranch = await Branch.findOne({
+            name: req.body.name,
+            _id: { $ne: req.params.id }
         });
         if (existingBranch)
             return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "يوجد فرع آخر بنفس الاسم"));
 
         branch = await Branch.findByIdAndUpdate(
-            req.params.id, 
-            { 
+            req.params.id,
+            {
                 name: req.body.name,
                 address: req.body.address
             },
@@ -87,7 +87,7 @@ router.delete("/deleteBranch/:id", [auth, admin, validateObjectId], async (req, 
             return res.status(404).send(createBaseResponse(null, false, 404, 0, null, "الفرع غير موجود"));
 
         branch = await Branch.findByIdAndDelete(req.params.id);
-        
+
         res.send(createBaseResponse(branch, true, 200, 0, null, "تم حذف الفرع بنجاح"));
     } catch (error) {
         res.status(500).send(createBaseResponse(null, false, 500, 0, error.message, "حدث خطأ أثناء حذف الفرع"));

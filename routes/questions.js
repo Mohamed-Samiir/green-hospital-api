@@ -34,7 +34,7 @@ router.post("/addQuestion", [auth, admin], async (req, res) => {
 
 
 //edit Question
-router.post("/editQuestion/:id", [auth, admin, validateObjectId], async (req, res) => {
+router.post("/editQuestion/:id", [auth, admin, validateObjectId()], async (req, res) => {
     const { error } = validate(req.body);
     if (error)
         return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "يوجد خطأ بالمدخلات"));

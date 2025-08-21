@@ -50,7 +50,7 @@ router.post("/addDoctor", [auth, admin], async (req, res) => {
 
 
 //edit Doctor
-router.post("/editDoctor/:id", [auth, admin, validateObjectId], async (req, res) => {
+router.post("/editDoctor/:id", [auth, admin, validateObjectId()], async (req, res) => {
     const { error } = validate(req.body);
     if (error)
         return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "يوجد خطأ بالمدخلات"));
@@ -74,7 +74,7 @@ router.post("/editDoctor/:id", [auth, admin, validateObjectId], async (req, res)
 });
 
 //delete Doctor
-router.delete("/deleteDoctor/:id", [auth, admin, validateObjectId], async (req, res) => {
+router.delete("/deleteDoctor/:id", [auth, admin, validateObjectId()], async (req, res) => {
     let doctor = await Doctor.findOne({ _id: req.params.id });
     if (!doctor)
         return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "الطبيب غير موجود"));
