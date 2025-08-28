@@ -49,14 +49,22 @@ router.post("/editQuestion/:id", [auth, admin, validateObjectId()], async (req, 
 });
 
 //delete Question
-router.delete("/deleteQuestion/:id", [auth, admin, validateObjectId], async (req, res) => {
-    let question = await Question.findOne({ _id: req.params.id });
-    if (!question)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "السؤال غير موجود"));
+router.delete("/deleteQuestion/:id", [auth, admin, validateObjectId()], async (req, res) => {
+    try {
+        // First check if the question exists
+        let question = await Question.findOne({ _id: req.params.id });
+        if (!question)
+            return res.status(404).send(createBaseResponse(null, false, 404, 0, null, "السؤال غير موجود"));
 
-    question = await Question.findByIdAndDelete(req.params.id,);
+        // Delete the question
+        const deletedQuestion = await Question.findByIdAndDelete(req.params.id);
+        console.log("Deleted question:", deletedQuestion);
 
-    res.send(createBaseResponse(question, true, 200));
+        res.send(createBaseResponse(deletedQuestion, true, 200, 0, null, "تم حذف السؤال بنجاح"));
+    } catch (error) {
+        console.error("Error deleting question:", error);
+        res.status(500).send(createBaseResponse(null, false, 500, 0, error.message, "حدث خطأ أثناء حذف السؤال"));
+    }
 });
 
 module.exports = router;
