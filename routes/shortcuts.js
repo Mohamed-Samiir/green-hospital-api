@@ -31,7 +31,7 @@ router.post("/addShortcut", auth, async (req, res) => {
 });
 
 //delete Shortcut
-router.delete("/deleteShortcut/:id", [auth, validateObjectId], async (req, res) => {
+router.delete("/deleteShortcut/:id", [auth, validateObjectId()], async (req, res) => {
     let shortcut = await Shortcut.findOne({ _id: req.params.id });
     if (!shortcut)
         return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "الاختصار غير موجود"));

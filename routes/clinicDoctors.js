@@ -36,7 +36,7 @@ router.post("/addClinicDoctor", [auth, admin], async (req, res) => {
 
 
 // edit Clinic Doctor
-router.post("/editClinicDoctor/:id", [auth, admin, validateObjectId], async (req, res) => {
+router.post("/editClinicDoctor/:id", [auth, admin, validateObjectId()], async (req, res) => {
     try {
         const { error } = validate(req.body);
         if (error)
@@ -74,7 +74,7 @@ router.post("/editClinicDoctor/:id", [auth, admin, validateObjectId], async (req
 });
 
 //delete Clinic Doctor
-router.delete("/deleteClinicDoctor/:id", [auth, admin, validateObjectId], async (req, res) => {
+router.delete("/deleteClinicDoctor/:id", [auth, admin, validateObjectId()], async (req, res) => {
     try {
         let clinicDoctor = await ClinicDoctor.findOne({ _id: req.params.id });
         if (!clinicDoctor)

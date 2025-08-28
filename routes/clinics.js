@@ -203,7 +203,7 @@ router.post("/editClinic/:id", [auth, admin], async (req, res) => {
 });
 
 //delete Clinic
-router.delete("/deleteClinic/:id", [auth, admin, validateObjectId], async (req, res) => {
+router.delete("/deleteClinic/:id", [auth, admin, validateObjectId()], async (req, res) => {
     let clinic = await Clinic.findOne({ _id: req.params.id });
     if (!clinic)
         return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "العيادة غير موجودة"));

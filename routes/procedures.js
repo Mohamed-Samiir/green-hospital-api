@@ -49,7 +49,7 @@ router.post("/editProcedure/:id", [auth, admin, validateObjectId()], async (req,
 });
 
 //delete Procedure
-router.delete("/deleteProcedure/:id", [auth, admin, validateObjectId], async (req, res) => {
+router.delete("/deleteProcedure/:id", [auth, admin, validateObjectId()], async (req, res) => {
     let procedure = await Procedure.findOne({ _id: req.params.id });
     if (!procedure)
         return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "الإجراء غير موجود"));

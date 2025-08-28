@@ -80,7 +80,7 @@ router.post("/editBranch/:id", [auth, admin, validateObjectId()], async (req, re
 });
 
 // Delete Branch
-router.delete("/deleteBranch/:id", [auth, admin, validateObjectId], async (req, res) => {
+router.delete("/deleteBranch/:id", [auth, admin, validateObjectId()], async (req, res) => {
     try {
         let branch = await Branch.findOne({ _id: req.params.id });
         if (!branch)
