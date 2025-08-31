@@ -9,166 +9,138 @@ const router = express.Router();
 const validateObjectId = require("../middleware/validateObjectId");
 
 
-// get Clinics
+// get Clinics - Returns clinics with doctors and branches in the specified format
 router.get("/getClinics", auth, async (req, res) => {
-    const totalCount = await Clinic.countDocuments()
-    // const clinics = await Clinic.find()
-    //     .sort("name")
+    try {
+        const totalCount = await Clinic.countDocuments();
 
-    // let clinicsResponse = []
-    // if (clinics.length) {
-    //     for (let i = 0; i < clinics.length; i++) {
-    //         let clinicDoctors = await ClinicDoctor.find({ clinic: clinics[i]._id }).populate('doctor')
-    //         clinicsResponse.push({
-    //             name: clinics[i].name,
-    //             _id: clinics[i]._id,
-    //             doctors: clinicDoctors
-    //         })
-    //     }
-    // }
-
-    const clinicsResponse = await Clinic.aggregate([
-        {
-            $lookup: {
-                from: "clinicdoctors", // The name of the clinicDoctors collection
-                localField: "_id",     // The field from the clinics collection
-                foreignField: "clinic", // The field from the clinicDoctors collection
-                as: "clinicDoctors"     // The output array field
-            }
-        },
-        {
-            $lookup: {
-                from: "doctors",            // The name of the doctors collection
-                localField: "clinicDoctors.doctor", // The field from clinicDoctors
-                foreignField: "_id",        // The field from the doctors collection
-                as: "doctorDetails"         // The output array field
-            }
-        },
-        {
-            $lookup: {
-                from: "branches",           // The name of the branches collection
-                localField: "clinicDoctors.branches", // The field from clinicDoctors (now array)
-                foreignField: "_id",        // The field from the branches collection
-                as: "branchDetails"         // The output array field
-            }
-        },
-        {
-            $addFields: { // Add doctor names and branch names to each clinicDoctor
-                "clinicDoctors": {
-                    $map: {
-                        input: "$clinicDoctors",
-                        as: "clinicDoctor",
-                        in: {
-                            $mergeObjects: [
-                                "$$clinicDoctor", // Keep all properties of clinicDoctor
-                                {
-                                    doctorName: {
-                                        $arrayElemAt: [
-                                            {
-                                                $filter: {
-                                                    input: "$doctorDetails",
-                                                    as: "doctor",
-                                                    cond: { $eq: ["$$doctor._id", "$$clinicDoctor.doctor"] } // Match doctor ID
-                                                }
-                                            },
-                                            0 // Get the first matching doctor
-                                        ]
-                                    },
-                                    branchNames: {
-                                        $map: {
-                                            input: "$$clinicDoctor.branches",
-                                            as: "branchId",
-                                            in: {
-                                                $arrayElemAt: [
-                                                    {
-                                                        $filter: {
-                                                            input: "$branchDetails",
-                                                            as: "branch",
-                                                            cond: { $eq: ["$$branch._id", "$$branchId"] } // Match branch ID
-                                                        }
-                                                    },
-                                                    0 // Get the first matching branch
-                                                ]
-                                            }
+        const clinicsResponse = await Clinic.aggregate([
+            // Stage 1: Lookup clinic doctors
+            {
+                $lookup: {
+                    from: "clinicdoctors",
+                    localField: "_id",
+                    foreignField: "clinic",
+                    as: "clinicDoctors"
+                }
+            },
+            // Stage 2: Unwind clinic doctors to process each one individually
+            {
+                $unwind: {
+                    path: "$clinicDoctors",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            // Stage 3: Lookup doctor details (only name and _id needed)
+            {
+                $lookup: {
+                    from: "doctors",
+                    localField: "clinicDoctors.doctor",
+                    foreignField: "_id",
+                    as: "doctorInfo",
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                name: 1
+                            }
+                        }
+                    ]
+                }
+            },
+            // Stage 4: Lookup branch details (only name and _id needed)
+            {
+                $lookup: {
+                    from: "branches",
+                    localField: "clinicDoctors.branches",
+                    foreignField: "_id",
+                    as: "branchInfo",
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                name: 1
+                            }
+                        }
+                    ]
+                }
+            },
+            // Stage 5: Create doctor structure with proper field names
+            {
+                $addFields: {
+                    "doctorData": {
+                        $cond: [
+                            { $ne: [{ $arrayElemAt: ["$doctorInfo", 0] }, null] },
+                            {
+                                _id: "$clinicDoctors._id",
+                                name: { $arrayElemAt: ["$doctorInfo.name", 0] },
+                                doctorId: "$clinicDoctors.doctor",
+                                price: "$clinicDoctors.price",
+                                acceptInsurance: "$clinicDoctors.acceptInsurance",
+                                freeVisitFollowup: "$clinicDoctors.freeVisitFollowup",
+                                ageFrom: "$clinicDoctors.ageFrom",
+                                ageFromUnit: "$clinicDoctors.ageFromUnit",
+                                ageTo: "$clinicDoctors.ageTo",
+                                ageToUnit: "$clinicDoctors.ageToUnit",
+                                notes: "$clinicDoctors.notes",
+                                branches: {
+                                    $map: {
+                                        input: "$branchInfo",
+                                        as: "branch",
+                                        in: {
+                                            _id: "$$branch._id",
+                                            branchName: "$$branch.name"
                                         }
                                     }
                                 }
+                            },
+                            null
+                        ]
+                    }
+                }
+            },
+            // Stage 6: Group back by clinic
+            {
+                $group: {
+                    _id: "$_id",
+                    clinicName: { $first: "$name" },
+                    doctors: {
+                        $push: {
+                            $cond: [
+                                { $ne: ["$doctorData", null] },
+                                "$doctorData",
+                                "$$REMOVE"
                             ]
                         }
                     }
                 }
-            }
-        },
-        {
-            $project: {                     // Project the final output
-                _id: 1,
-                name: 1,
-                clinicDoctors: {
-                    $filter: {
-                        input: "$clinicDoctors",
-                        as: "clinicDoctor",
-                        cond: { $ne: ["$$clinicDoctor.doctorName", null] } // Filter out clinicDoctors without doctor names
+            },
+            // Stage 7: Final projection with exact field names as requested
+            {
+                $project: {
+                    clinicName: 1,
+                    _id: 1,
+                    doctors: {
+                        $filter: {
+                            input: "$doctors",
+                            as: "doctor",
+                            cond: { $ne: ["$$doctor", "$$REMOVE"] }
+                        }
                     }
                 }
+            },
+            // Stage 8: Sort by clinic name
+            {
+                $sort: { clinicName: 1 }
             }
-        }
-    ]);
+        ]);
 
-
-    res.send(createBaseResponse(clinicsResponse, true, 200, totalCount));
+        res.send(createBaseResponse(clinicsResponse, true, 200, totalCount));
+    } catch (error) {
+        console.error("Error in getClinics:", error);
+        res.status(500).send(createBaseResponse(null, false, 500, 0, error.message, "حدث خطأ أثناء جلب العيادات"));
+    }
 })
-
-// router.get("/getClinics", auth, async (req, res) => {
-//     try {
-//         const totalCount = await Clinic.countDocuments();
-
-//         const clinicsResponse = await Clinic.aggregate([
-//             {
-//                 $lookup: {
-//                     from: 'clinicDoctors',               // Lookup into clinicDoctors collection
-//                     localField: '_id',                   // Match clinic _id
-//                     foreignField: 'clinic',              // with clinic field in clinicDoctors
-//                     as: 'clinicDoctors'
-//                 }
-//             },
-//             {
-//                 $unwind: {                              // Unwind clinicDoctors to process each clinic-doctor relation
-//                     path: "$clinicDoctors",
-//                     preserveNullAndEmptyArrays: true    // Preserve clinics even if no doctors are linked
-//                 }
-//             },
-//             {
-//                 $lookup: {
-//                     from: 'doctors',                    // Lookup into doctors collection
-//                     localField: 'clinicDoctors.doctor',  // Match doctor id from clinicDoctors
-//                     foreignField: '_id',                // with _id in doctors collection
-//                     as: 'doctorDetails'                 // Output array with matching doctor documents
-//                 }
-//             },
-//             {
-//                 $unwind: {                              // Unwind doctorDetails array to get individual doctor data
-//                     path: "$doctorDetails",
-//                     preserveNullAndEmptyArrays: true
-//                 }
-//             },
-//             {
-//                 $group: {                               // Group by clinic
-//                     _id: "$_id",
-//                     name: { $first: "$name" },          // Keep clinic name
-//                     doctors: { $push: "$doctorDetails" } // Collect doctor details into an array
-//                 }
-//             },
-//             {
-//                 $sort: { name: 1 }                      // Sort clinics by name
-//             }
-//         ]);
-
-//         res.send(createBaseResponse(clinicsResponse, true, 200, totalCount));
-//     } catch (error) {
-//         res.status(500).send({ error: "Something went wrong." });
-//     }
-// });
-
 
 //add Clinic
 router.post("/addClinic", [auth, admin], async (req, res) => {
@@ -188,29 +160,53 @@ router.post("/addClinic", [auth, admin], async (req, res) => {
 
 
 // edit Clinic
-router.post("/editClinic/:id", [auth, admin], async (req, res) => {
-    const { error } = validate(req.body);
-    if (error)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "يوجد خطأ بالمدخلات"));
+router.post("/editClinic/:id", [auth, admin, validateObjectId()], async (req, res) => {
+    try {
+        const { error } = validate(req.body);
+        if (error)
+            return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "يوجد خطأ بالمدخلات"));
 
-    let clinic = await Clinic.findOne({ _id: req.params.id });
-    if (!clinic)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "العيادة غير موجودة"));
+        // Check if clinic exists
+        let clinic = await Clinic.findOne({ _id: req.params.id });
+        if (!clinic)
+            return res.status(404).send(createBaseResponse(null, false, 404, 0, null, "العيادة غير موجودة"));
 
-    clinic = await Clinic.findByIdAndUpdate(req.params.id, { name: req.body.name });
+        // Update the clinic and return the updated document
+        const updatedClinic = await Clinic.findByIdAndUpdate(
+            req.params.id,
+            { name: req.body.name },
+            { new: true, runValidators: true }
+        );
 
-    res.send(createBaseResponse(clinic, true, 200));
+        console.log("Updated clinic:", updatedClinic);
+        res.send(createBaseResponse(updatedClinic, true, 200, 0, null, "تم تحديث العيادة بنجاح"));
+    } catch (error) {
+        console.error("Error updating clinic:", error);
+        res.status(500).send(createBaseResponse(null, false, 500, 0, error.message, "حدث خطأ أثناء تحديث العيادة"));
+    }
 });
 
 //delete Clinic
 router.delete("/deleteClinic/:id", [auth, admin, validateObjectId()], async (req, res) => {
-    let clinic = await Clinic.findOne({ _id: req.params.id });
-    if (!clinic)
-        return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "العيادة غير موجودة"));
+    try {
+        // First check if the clinic exists
+        let clinic = await Clinic.findOne({ _id: req.params.id });
+        if (!clinic)
+            return res.status(404).send(createBaseResponse(null, false, 404, 0, null, "العيادة غير موجودة"));
 
-    let clinicDoctors = await ClinicDoctor.deleteMany({ clinic: clinic._id })
-    clinic = await Clinic.findByIdAndDelete(req.params.id);
-    res.send(createBaseResponse(clinic, true, 200));
+        // Delete all associated clinic doctors first
+        await ClinicDoctor.deleteMany({ clinic: clinic._id });
+        console.log("Deleted associated clinic doctors for clinic:", clinic._id);
+
+        // Delete the clinic
+        const deletedClinic = await Clinic.findByIdAndDelete(req.params.id);
+        console.log("Deleted clinic:", deletedClinic);
+
+        res.send(createBaseResponse(deletedClinic, true, 200, 0, null, "تم حذف العيادة بنجاح"));
+    } catch (error) {
+        console.error("Error deleting clinic:", error);
+        res.status(500).send(createBaseResponse(null, false, 500, 0, error.message, "حدث خطأ أثناء حذف العيادة"));
+    }
 });
 
 

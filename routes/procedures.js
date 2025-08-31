@@ -9,12 +9,18 @@ const validateObjectId = require("../middleware/validateObjectId");
 
 //get Procedures
 router.get("/getProcedures", auth, async (req, res) => {
-    const totalCount = await Procedure.countDocuments()
-    const procedures = await Procedure.find()
-        .populate('doctors', "name _id")
-        .sort("name")
+    try {
+        const totalCount = await Procedure.countDocuments()
+        const procedures = await Procedure.find()
+            .populate('doctors', "name _id")
+            .populate('branchId', 'name _id')
+            .sort("name")
 
-    res.send(createBaseResponse(procedures, true, 200, totalCount));
+        res.send(createBaseResponse(procedures, true, 200, totalCount));
+    } catch (error) {
+        console.error("Error in getProcedures:", error);
+        res.status(500).send(createBaseResponse(null, false, 500, 0, error.message, "حدث خطأ أثناء جلب الإجراءات"));
+    }
 })
 
 //add procedure
@@ -23,7 +29,7 @@ router.post("/addProcedure", [auth, admin], async (req, res) => {
     if (error)
         return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "يوجد خطأ بالمدخلات"));
 
-    let procedure = await Procedure.findOne({ name: req.body.name });
+    let procedure = await Procedure.findOne({ name: req.body.name, branchId: req.body.branchId });
     if (procedure)
         return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "الإجراء مضاف بالفعل"));
 

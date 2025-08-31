@@ -22,6 +22,10 @@ const departmentSchema = new mongoose.Schema({
         required: true,
         minlength: 3,
         maxlength: 255
+    },
+    branchId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Branch",
     }
 });
 
@@ -38,7 +42,9 @@ function validateDepartment(Department) {
         contactPeriods: Joi.string()
             .required()
             .max(255)
-            .min(3)
+            .min(3),
+        branchId: Joi.string()
+            .optional()
     });
 
     return schema.validate(Department)

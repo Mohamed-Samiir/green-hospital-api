@@ -10,11 +10,17 @@ const validateObjectId = require("../middleware/validateObjectId");
 
 //get Departments
 router.get("/getDepartments", auth, async (req, res) => {
-    const totalCount = await Department.countDocuments()
-    const departments = await Department.find()
-        .sort("name")
+    try {
+        const totalCount = await Department.countDocuments()
+        const departments = await Department.find()
+            .populate('branchId', 'name _id')
+            .sort("name")
 
-    res.send(createBaseResponse(departments, true, 200, totalCount));
+        res.send(createBaseResponse(departments, true, 200, totalCount));
+    } catch (error) {
+        console.error("Error in getDepartments:", error);
+        res.status(500).send(createBaseResponse(null, false, 500, 0, error.message, "حدث خطأ أثناء جلب الأقسام"));
+    }
 })
 
 //add Department
@@ -23,7 +29,7 @@ router.post("/addDepartment", [auth, admin], async (req, res) => {
     if (error)
         return res.status(400).send(createBaseResponse(null, false, 400, 0, error, "يوجد خطأ بالمدخلات"));
 
-    let department = await Department.findOne({ name: req.body.name });
+    let department = await Department.findOne({ name: req.body.name, branchId: req.body.branchId });
     if (department)
         return res.status(400).send(createBaseResponse(null, false, 400, 0, null, "القسم مضاف بالفعل"));
 

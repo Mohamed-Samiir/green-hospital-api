@@ -41,6 +41,10 @@ const procedureSchema = new mongoose.Schema({
     notes: {
         type: String,
         maxlength: 255
+    },
+    branchId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Branch",
     }
 });
 
@@ -67,7 +71,9 @@ function validateProcedure(Procedure) {
             .min(1),
         ageToUnit: Joi.number(),
         notes: Joi.string()
-            .allow('')
+            .allow(''),
+        branchId: Joi.string()
+            .optional()
     });
 
     return schema.validate(Procedure)
